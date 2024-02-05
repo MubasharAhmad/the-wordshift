@@ -22,6 +22,9 @@ setInterval(shuffleArray, shuffleInterval);
 app.use(express.static("public"));
 app.use(express.json());
 
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
 app.get("/", (req, res) => {
 	res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -31,6 +34,39 @@ app.post("/get-shuffled-time", async (req, res) => {
 		res.json({ shuffledTime });
 	} catch (error) {
 		console.error("Error get shuffled time:", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
+app.post("/saveSharedScore", async (req, res) => {
+	try {
+		const { scores } = req.body;
+		const id = new Date().getTime();
+		let sql = `INSERT INTO shares (shareId, score) VALUES(?,?)`;
+		db.run(sql, [id, scores], (err) => {
+			if (err) return console.log(err.message);
+			res.json({ sharedId: id });
+		});
+	} catch (error) {
+		console.error("Error get saving shared scores", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
+app.get("/shared/:id", async (req, res) => {
+	try {
+		const { id } = req.params;
+		let sql = `SELECT * FROM shares WHERE shareId = ?`;
+		db.all(sql, [id], (err, rows) => {
+			if (err) return console.log(err.message);
+			if (rows.length > 0) {
+				res.render("shared", { scores: rows[0].score, isFound: true });
+			} else {
+				res.render("shared", { scores: 0, isFound: false });
+			}
+		});
+	} catch (error) {
+		console.error("Error get shared scores", error);
 		res.status(500).json({ error: "Internal server error" });
 	}
 });
@@ -76,9 +112,10 @@ app.post("/add-userattempt", async (req, res) => {
 app.post("/next-guess", async (req, res) => {
 	try {
 		const { index } = req.body;
-		let word =
-			shuffledList[index] ??
-			shuffledList[Math.floor(Math.random() * shuffledList.length)];
+		let word = shuffledList[index]
+		if (!word) {
+			word = shuffledList[Math.floor(Math.random() * shuffledList.length)];
+		}
 		res.json({ word });
 	} catch (error) {
 		console.error("Error getting next guess:", error);

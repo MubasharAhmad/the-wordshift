@@ -19,6 +19,8 @@ const initialsError = document.getElementById("initials-error");
 const startBtn = document.getElementById("start-btn");
 const currentScoreSpan = document.getElementById("current-score");
 const comeBackScreen = document.getElementById("comeback-screen");
+const scoreSpan = document.getElementById("score-span");
+const shareLinkEl = document.getElementById("share-link");
 
 let isAlreadyPlayed = false;
 
@@ -78,6 +80,8 @@ if (!isAlreadyPlayed) {
 	let userInitials = "";
 	let userId = null;
 	let score = 0;
+	let userGuesses = [];
+	let shareId = 0;
 
 	// lists
 	let triesBlocks = [];
@@ -159,12 +163,23 @@ if (!isAlreadyPlayed) {
 
 	guessNextBtn.addEventListener("click", () => {
 		if (gameOver) {
-			window.location.reload();
-		} else {
-			resultElement.classList.toggle("hidden");
-			resultElement.classList.toggle("fixed");
-			resultElement.classList.toggle("flex");
-			resetGame();
+			// Create a temporary textarea element
+			const textarea = document.createElement("textarea");
+			textarea.value = window.location.href + "shared/" + shareId;
+			document.body.appendChild(textarea);
+
+			// Select the text in the textarea
+			textarea.select();
+			textarea.setSelectionRange(0, textarea.value.length);
+
+			// Copy the selected text to the clipboard
+			document.execCommand("copy");
+
+			// Remove the temporary textarea
+			document.body.removeChild(textarea);
+
+			// Optionally, provide feedback to the user
+			alert("Link copied to clipboard!");
 		}
 	});
 
@@ -177,7 +192,9 @@ if (!isAlreadyPlayed) {
 			score += 1;
 			currentScoreSpan.innerText = score;
 		}
+		if (remainingAttempts < 4) userGuesses.shift();
 		for (let i = 0; i < triesBlocks.length; i++) {
+			let uCurrentWord = userGuesses[i];
 			if (i + 1 < triesBlocks.length) {
 				for (let j = 0; j < triesBlocks[i].length; j++) {
 					if (remainingAttempts < 4) {
@@ -185,22 +202,18 @@ if (!isAlreadyPlayed) {
 							triesBlocks[i + 1][j].innerHTML;
 					}
 					let c = remainingAttempts > 3 ? i : i + 1;
-					if (triesBlocks[c][j].innerHTML) {
-						let color = "gray";
-						if (currentGuess[j] === triesBlocks[i][j].innerText) {
-							color = "green";
-						} else if (
-							currentGuess.includes(triesBlocks[i][j].innerText)
-						) {
-							color = "yellow";
-						}
+					if (triesBlocks[c][j].innerHTML && uCurrentWord) {
+						const colors = getGuessColors(
+							currentGuess,
+							uCurrentWord
+						);
 						triesBlocks[i][j].classList = [];
 						triesBlocks[i][j].classList.add(
 							"h-14",
-							`bg-${color}-400`,
+							`bg-${colors[j]}-400`,
 							"rounded-md",
 							"border-2",
-							`border-${color}-600`,
+							`border-${colors[j]}-600`,
 							"text-white",
 							"flex",
 							"justify-center",
@@ -356,28 +369,28 @@ if (!isAlreadyPlayed) {
 			} else {
 				status.innerText = "";
 			}
+			userGuesses.push(currentUserWord);
+			const colors = getGuessColors(currentGuess, currentUserWord);
+			// get guess colors
 			for (let i = 0; i < currentUserWord.length; i++) {
-				let color = "gray";
-				if (currentGuess[i] === currentUserWord[i]) {
-					color = "green";
-				} else if (currentGuess.includes(currentUserWord[i])) {
-					color = "yellow";
-				}
 				triesBlocks[NUMBER_OF_ATTEMPTS - remainingAttempts][
 					i
 				].classList.remove("bg-violet-100", "border-violet-300");
 				triesBlocks[NUMBER_OF_ATTEMPTS - remainingAttempts][
 					i
 				].classList.add(
-					`bg-${color}-400`,
-					`border-${color}-600`,
+					`bg-${colors[i]}-400`,
+					`border-${colors[i]}-600`,
 					"text-white"
 				);
 				// keyboard buttons
 				keyboardKeys.forEach((element) => {
 					if (element.innerText === currentUserWord[i]) {
 						element.classList.remove("bg-violet-100");
-						element.classList.add(`bg-${color}-400`, "text-white");
+						element.classList.add(
+							`bg-${colors[i]}-400`,
+							"text-white"
+						);
 					}
 				});
 			}
@@ -404,12 +417,12 @@ if (!isAlreadyPlayed) {
 					userId = jsonResult.userId;
 				}
 			} else if (remainingAttempts === 0) {
-				setTimeout(() => {
+				setTimeout(async () => {
 					resultElement.classList.toggle("hidden");
 					resultElement.classList.toggle("fixed");
 					resultElement.classList.toggle("flex");
 					resultTitle.innerText = "You Loss!!";
-					guessNextBtn.innerText = "Start Again!";
+					guessNextBtn.innerText = "Copy Link";
 					gameOver = true;
 					correctWordSpan.innerText = currentGuess.toUpperCase();
 					const userData = localStorage.getItem("userData");
@@ -419,6 +432,20 @@ if (!isAlreadyPlayed) {
 						"userData",
 						JSON.stringify(userJsonData)
 					);
+					let result = await fetch("/saveSharedScore", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ scores: score }),
+					});
+					let jsonResult = await result.json();
+					shareId = jsonResult.sharedId;
+					scoreSpan.innerText = score;
+					shareLinkEl.innerText =
+						window.location.href + "shared/" + shareId;
+					shareLinkEl.href =
+						window.location.href + "shared/" + shareId;
 				}, 500);
 				const result = await fetch("/add-userattempt", {
 					method: "POST",
@@ -455,6 +482,31 @@ if (!isAlreadyPlayed) {
 				currentUserWord.length - 1
 			].innerHTML = key;
 		}
+	};
+
+	// get guess colors
+	const getGuessColors = (currentGuess, userGuess) => {
+		let colors = Array(currentGuess.length).fill("gray");
+		let indexesToRemove = [];
+		for (let i = 0; i < currentGuess.length; i++) {
+			if (currentGuess[i] === userGuess[i]) {
+				indexesToRemove.push(i);
+				colors[i] = "green";
+			}
+		}
+		let outputString = Array.from(currentGuess)
+			.filter((_, index) => !indexesToRemove.includes(index))
+			.join("");
+		for (let i = 0; i < userGuess.length; i++) {
+			if (colors[i] === "gray" && outputString.includes(userGuess[i])) {
+				colors[i] = "yellow";
+				let indexToRemove = outputString.indexOf(userGuess[i]);
+				outputString =
+					outputString.slice(0, indexToRemove) +
+					outputString.slice(indexToRemove + 1);
+			}
+		}
+		return colors;
 	};
 
 	// add keyboard event listner

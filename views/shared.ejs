@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Shared Data - The WordShift</title>
+	</head>
+	<body
+		style="
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-items: center;
+			margin: 0;
+			padding: 0;
+			font-family: Arial, Helvetica, sans-serif;
+		"
+	>
+		<% if (isFound) { %>
+		<p style="text-align: center; width: 100%; font-size: x-large">
+			I Scored <%= scores %> on the
+			<a target="_blank" style="text-align: center" href="/">WordShift</a>
+		</p>
+		<% } else { %>
+		<p style="text-align: center; width: 100%; font-size: x-large">
+			No data found.
+		</p>
+		<% } %>
+	</body>
+</html>

@@ -69,10 +69,15 @@
 
         <!-- result -->
         <div id="result" class="hidden z-20 top-0 left-0 w-full min-h-screen bg-black/50 justify-center items-center">
-            <div class="w-96 bg-white p-3 rounded-lg shadow-sm">
+            <div class="w-96 bg-white p-3 rounded-lg shadow-sm flex flex-col justify-center items-center">
                 <p id="result-title" class="text-3xl text-center font-semibold text-violet-900">You Got it!!</p>
                 <p class="text-center text-lg">it was <span id="correct-word" class="font-semibold">WORLD</span></p>
-                <button id="guess-next-btn" class="w-full text-center text-lg bg-violet-900 hover:bg-violet-800 text-white py-2 rounded-lg mt-3">GUESS NEXT</button>
+                <p>You scored <span id="score-span"></span></p>
+                <p class="text-lg font-semibold">Share Your Score</p>
+                <div class="flex justify-center items-center gap-x-2">
+                    <a href="/" target="_blank" id="share-link" class="text-center text-lg max-w-56 overflow-hidden text-blue-600">http:localhost/shared/127415247</a>
+                    <button id="guess-next-btn" class="text-center bg-violet-900 hover:bg-violet-800 text-white px-2 py-1 rounded-lg">Copy Link</button>
+                </div>
             </div>
         </div>
 
