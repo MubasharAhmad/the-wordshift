@@ -112,9 +112,10 @@ app.post("/add-userattempt", async (req, res) => {
 app.post("/next-guess", async (req, res) => {
 	try {
 		const { index } = req.body;
-		let word = shuffledList[index]
+		let word = shuffledList[index];
 		if (!word) {
-			word = shuffledList[Math.floor(Math.random() * shuffledList.length)];
+			word =
+				shuffledList[Math.floor(Math.random() * shuffledList.length)];
 		}
 		res.json({ word });
 	} catch (error) {

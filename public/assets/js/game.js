@@ -12,7 +12,6 @@ const leaderboardCloseBtn = document.getElementById("leaderboard-close-btn");
 const leaderboardOpenBtn = document.getElementById("leaderboard-open-btn");
 const leaderboardTableBody = document.getElementById("leaderboard-table-body");
 const status = document.getElementById("status");
-const giveUpBtn = document.getElementById("giveup-btn");
 const startScreen = document.getElementById("start-screen");
 const initialsInput = document.getElementById("initials");
 const initialsError = document.getElementById("initials-error");
@@ -21,6 +20,14 @@ const currentScoreSpan = document.getElementById("current-score");
 const comeBackScreen = document.getElementById("comeback-screen");
 const scoreSpan = document.getElementById("score-span");
 const shareLinkEl = document.getElementById("share-link");
+const helpBtn = document.getElementById("help-btn");
+const helpScreenBtn = document.getElementById("help-screen");
+
+helpBtn.addEventListener("click", () => {
+	helpScreenBtn.classList.toggle("hidden");
+	helpScreenBtn.classList.toggle("fixed");
+	helpScreenBtn.classList.toggle("flex");
+})
 
 let isAlreadyPlayed = false;
 
@@ -106,15 +113,6 @@ if (!isAlreadyPlayed) {
 		isStarted = true;
 	});
 
-	giveUpBtn.addEventListener("click", async () => {
-		resultElement.classList.toggle("hidden");
-		resultElement.classList.toggle("fixed");
-		resultElement.classList.toggle("flex");
-		resultTitle.innerText = "";
-		correctWordSpan.innerText = currentGuess.toUpperCase();
-		await getNextGuess();
-	});
-
 	leaderboardOpenBtn.addEventListener("click", async () => {
 		leaderboardTableBody.innerHTML = null;
 		let userData = [];
@@ -161,8 +159,10 @@ if (!isAlreadyPlayed) {
 		leaderboardElement.classList.toggle("flex");
 	});
 
-	guessNextBtn.addEventListener("click", () => {
-		if (gameOver) {
+	guessNextBtn.addEventListener("click", async () => {
+		if (guessNextBtn.innerText === "Guess Next") {
+			await resetGame();
+		} else if (gameOver) {
 			// Create a temporary textarea element
 			const textarea = document.createElement("textarea");
 			textarea.value = window.location.href + "shared/" + shareId;
@@ -192,6 +192,7 @@ if (!isAlreadyPlayed) {
 			score += 1;
 			currentScoreSpan.innerText = score;
 		}
+		addKeyboard();
 		if (remainingAttempts < 4) userGuesses.shift();
 		for (let i = 0; i < triesBlocks.length; i++) {
 			let uCurrentWord = userGuesses[i];
@@ -207,6 +208,33 @@ if (!isAlreadyPlayed) {
 							currentGuess,
 							uCurrentWord
 						);
+						keyboardKeys.forEach((element) => {
+							if (element.innerText === uCurrentWord[j]) {
+								if (
+									element.classList.contains(
+										"bg-violet-100"
+									) ||
+									element.classList.contains("bg-gray-400")
+								) {
+									element.classList.remove("bg-violet-100");
+									element.classList.remove("bg-gray-400");
+									element.classList.remove("bg-yellow-400");
+									element.classList.add(
+										`bg-${colors[j]}-400`,
+										"text-white"
+									);
+								} else if (colors[j] === "green") {
+									element.classList.remove("bg-violet-100");
+									element.classList.remove("bg-gray-400");
+									element.classList.remove("bg-yellow-400");
+									element.classList.remove("bg-green-400");
+									element.classList.add(
+										`bg-${colors[j]}-400`,
+										"text-white"
+									);
+								}
+							}
+						});
 						triesBlocks[i][j].classList = [];
 						triesBlocks[i][j].classList.add(
 							"h-14",
@@ -253,7 +281,6 @@ if (!isAlreadyPlayed) {
 			remainingAttempts += 1;
 		}
 		isWin = false;
-		addKeyboard();
 	};
 
 	// get random word
@@ -386,11 +413,27 @@ if (!isAlreadyPlayed) {
 				// keyboard buttons
 				keyboardKeys.forEach((element) => {
 					if (element.innerText === currentUserWord[i]) {
-						element.classList.remove("bg-violet-100");
-						element.classList.add(
-							`bg-${colors[i]}-400`,
-							"text-white"
-						);
+						if (
+							element.classList.contains("bg-violet-100") ||
+							element.classList.contains("bg-gray-400")
+						) {
+							element.classList.remove("bg-violet-100");
+							element.classList.remove("bg-gray-400");
+							element.classList.remove("bg-yellow-400");
+							element.classList.add(
+								`bg-${colors[i]}-400`,
+								"text-white"
+							);
+						} else if (colors[i] === "green") {
+							element.classList.remove("bg-violet-100");
+							element.classList.remove("bg-gray-400");
+							element.classList.remove("bg-yellow-400");
+							element.classList.remove("bg-green-400");
+							element.classList.add(
+								`bg-${colors[i]}-400`,
+								"text-white"
+							);
+						}
 					}
 				});
 			}
